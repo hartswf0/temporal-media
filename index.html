@@ -2,188 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Temporal Media Apparatus - Multidimensional Interface</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background: #000;
-            color: #fff;
-            font-family: 'Courier New', monospace;
-        }
-        canvas {
-            display: block;
-        }
-        /* Info Panel Styles */
-        #infoPanel {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 300px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            display: none;
-        }
-        #infoPanel h2 {
-            margin-top: 0;
-            font-size: 24px;
-        }
-        #infoPanel p {
-            font-size: 16px;
-            line-height: 1.5;
-        }
-    </style>
+    <title>Temporal Media Apparatus</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <canvas id="scene"></canvas>
-    <div id="infoPanel">
-        <h2 id="artifactTitle"></h2>
-        <p id="artifactDescription"></p>
+    <!-- Star Field for Background Animation -->
+    <div id="starField"></div>
+
+    <!-- Orb Indicator for Navigation Feedback -->
+    <div id="orb"></div>
+
+    <!-- Vertical Timeline to Display Title Cards -->
+    <div id="timeline"></div>
+
+    <!-- Information Modal for Detailed Information -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"></h2>
+                <p class="logline"></p>
+                <p class="creator"></p>
+                <a href="#" class="more-info-link" target="_blank">Access Extended Data</a>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Dynamic Content Will Be Injected Here -->
+            </div>
+        </div>
     </div>
-    <script src="https://threejs.org/build/three.min.js"></script>
-    <script>
-        // Temporal Neural Apparatus Interface
 
-        // Data Entries with relationships
-        const dataEntries = [
-            {
-                id: 1,
-                title: "The Leavers (2017)",
-                creator: "Author: Lisa Ko",
-                description: "Explores identity, belonging, and immigration.",
-                position: { x: 0, y: 0, z: 0 },
-                connections: [2, 3]
-            },
-            {
-                id: 2,
-                title: "Hidden Figures (2016)",
-                creator: "Author: Margot Lee Shetterly",
-                description: "Highlights contributions of African American women at NASA.",
-                position: { x: 100, y: 50, z: -100 },
-                connections: [1, 4]
-            },
-            {
-                id: 3,
-                title: "Ex Machina (2015)",
-                creator: "Director: Alex Garland",
-                description: "Examines AI and consciousness.",
-                position: { x: -150, y: 75, z: -50 },
-                connections: [1, 5]
-            },
-            // Additional entries...
-        ];
+    <!-- Welcome Modal for Introduction and Start Button -->
+    <div id="welcomeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <h2 class="welcome-title">Welcome, Explorer</h2>
+                <p class="welcome-text">Embark on a journey through time uncovering hidden stories.</p>
+                <button id="startJourneyButton" class="start-button">Begin Your Quest</button>
+            </div>
+        </div>
+    </div>
 
-        // Scene setup
-        let scene, camera, renderer;
-        let orb, controls;
-        const artifacts = [];
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-
-        function init() {
-            scene = new THREE.Scene();
-
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-            camera.position.z = 300;
-
-            renderer = new THREE.WebGLRenderer({ antialias: true, canvas: document.getElementById('scene') });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-
-            // Add stars
-            const starsGeometry = new THREE.BufferGeometry();
-            const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff });
-            const starVertices = [];
-            for (let i = 0; i < 1000; i++) {
-                starVertices.push(
-                    (Math.random() - 0.5) * 2000,
-                    (Math.random() - 0.5) * 2000,
-                    (Math.random() - 0.5) * 2000
-                );
-            }
-            starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-            const stars = new THREE.Points(starsGeometry, starsMaterial);
-            scene.add(stars);
-
-            // Add artifacts
-            dataEntries.forEach(entry => {
-                const geometry = new THREE.BoxGeometry(40, 40, 40);
-                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.5, transparent: true });
-                const cube = new THREE.Mesh(geometry, material);
-                cube.position.set(entry.position.x, entry.position.y, entry.position.z);
-                cube.userData = entry;
-                artifacts.push(cube);
-                scene.add(cube);
-            });
-
-            // Add orb (player)
-            const orbGeometry = new THREE.SphereGeometry(10, 32, 32);
-            const orbMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            orb = new THREE.Mesh(orbGeometry, orbMaterial);
-            scene.add(orb);
-
-            // Controls
-            controls = new THREE.Vector2();
-
-            window.addEventListener('resize', onWindowResize, false);
-            document.addEventListener('mousemove', onMouseMove, false);
-            document.addEventListener('click', onClick, false);
-
-            animate();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            // Update orb position
-            orb.position.x += (controls.x - orb.position.x) * 0.05;
-            orb.position.y += (-controls.y - orb.position.y) * 0.05;
-            camera.position.x = orb.position.x;
-            camera.position.y = orb.position.y;
-            camera.lookAt(orb.position);
-
-            // Update artifacts transparency based on distance to orb
-            artifacts.forEach(artifact => {
-                const distance = orb.position.distanceTo(artifact.position);
-                artifact.material.opacity = THREE.MathUtils.clamp(1 - (distance / 500), 0.1, 1);
-            });
-
-            renderer.render(scene, camera);
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function onMouseMove(event) {
-            controls.x = (event.clientX / window.innerWidth) * 2 - 1;
-            controls.y = (event.clientY / window.innerHeight) * 2 - 1;
-
-            // Update mouse vector for raycasting
-            mouse.x = controls.x;
-            mouse.y = -controls.y;
-        }
-
-        function onClick() {
-            // Raycasting to detect clicked artifacts
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(artifacts);
-            if (intersects.length > 0) {
-                const artifact = intersects[0].object.userData;
-                showInfoPanel(artifact);
-            }
-        }
-
-        function showInfoPanel(artifact) {
-            document.getElementById('artifactTitle').textContent = `${artifact.title}`;
-            document.getElementById('artifactDescription').textContent = artifact.description;
-            document.getElementById('infoPanel').style.display = 'block';
-        }
-
-        init();
-    </script>
+    <!-- Scripts -->
+    <script src="dataEntries.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
